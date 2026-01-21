@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net7.0;net8.0;netstandard2.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <!-- Package Metadata -->
+    <PackageId>Toon.TokenOptimizer</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Prashant Dudami</Authors>
+    <Company>Prashant Dudami</Company>
+    <Product>TOON Token Optimizer</Product>
+    <Description>Token Optimized Object Notation - Reduce LLM token usage by 40-60% when sending structured data to AI systems like OpenAI, Azure OpenAI, and Anthropic Claude.</Description>
+    <Copyright>Copyright © 2025 Prashant Dudami</Copyright>
+    
+    <!-- NuGet Package Settings -->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/prashantdudami/toon-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/prashantdudami/toon-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>llm;ai;token;optimization;openai;azure;anthropic;claude;gpt;json;serialization;compression</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    
+    <!-- Build Settings -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" Condition="Exists('..\..\icon.png')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.0" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+  </ItemGroup>
+
+</Project>
