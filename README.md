@@ -282,5 +282,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Author
 
 **Prashant Dudami**  
+- LinkedIn: [linkedin.com/in/prashantdudami](https://www.linkedin.com/in/prashantdudami/)
 - PyPI: [toon-token-optimizer](https://pypi.org/project/toon-token-optimizer/)
 - GitHub: [toon-dotnet](https://github.com/prashantdudami/toon-dotnet)

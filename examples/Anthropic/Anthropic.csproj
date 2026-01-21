@@ -8,7 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Toon.TokenOptimizer" Version="1.0.0" />
+    <!-- Use local project for development; switch to PackageReference for distribution -->
+    <ProjectReference Include="../../src/Toon.TokenOptimizer/Toon.TokenOptimizer.csproj" />
+    <!-- <PackageReference Include="Toon.TokenOptimizer" Version="1.1.0" /> -->
   </ItemGroup>
 
 </Project>
