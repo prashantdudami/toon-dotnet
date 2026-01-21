@@ -35,23 +35,24 @@ var userActivities = new[]
 };
 
 // -----------------------------------------------------------------------------
-// Step 2: Convert to TOON and measure savings
+// Step 2: Compare all formats
 // -----------------------------------------------------------------------------
 
-string toonData = ToonConverter.ToToon(userActivities);
-var stats = ToonConverter.GetTokenReduction(userActivities);
+var comparison = ToonConverter.CompareFormats(userActivities);
 
 Console.WriteLine("Token Savings Analysis:");
 Console.WriteLine("-----------------------");
-Console.WriteLine($"Activities: {userActivities.Length}");
-Console.WriteLine($"JSON:       {stats.JsonTokens} tokens");
-Console.WriteLine($"TOON:       {stats.ToonTokens} tokens");
-Console.WriteLine($"Saved:      {stats.TokensSaved} tokens ({stats.ReductionPercent:F1}%)");
+Console.WriteLine($"Activities:       {userActivities.Length}");
+Console.WriteLine($"JSON:             {comparison.JsonTokens} tokens");
+Console.WriteLine($"Standard TOON:    {comparison.StandardToonTokens} tokens ({comparison.StandardToonReductionPercent:F1}% saved)");
+Console.WriteLine($"Compact TOON:     {comparison.CompactToonTokens} tokens ({comparison.CompactToonReductionPercent:F1}% saved)");
 Console.WriteLine();
 
-Console.WriteLine("TOON Output:");
-Console.WriteLine("------------");
-Console.WriteLine(toonData);
+// Use Compact for API calls
+string compactData = ToonConverter.ToCompactToon(userActivities);
+Console.WriteLine("Compact TOON Output (for Claude API):");
+Console.WriteLine("--------------------------------------");
+Console.WriteLine(compactData);
 Console.WriteLine();
 
 // -----------------------------------------------------------------------------
@@ -61,12 +62,12 @@ Console.WriteLine();
 string claudePrompt = $"""
     Analyze these user activity logs and identify any patterns or anomalies.
     
-    The data is in TOON format (Token Optimized Object Notation):
-    - Schema line shows column names (pipe-separated)
-    - Data lines contain values in the same order (pipe-separated)
+    The data is in TOON Compact format (Token Optimized Object Notation):
+    - Schema shown in brackets [field1|field2|...]
+    - Data rows follow with pipe-separated values
     
     Activity Logs:
-    {toonData}
+    {compactData}
     
     Please analyze:
     1. User behavior patterns

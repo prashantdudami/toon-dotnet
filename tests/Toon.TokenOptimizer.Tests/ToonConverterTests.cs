@@ -43,35 +43,35 @@ public class ToonConverterTests
     [Fact]
     public void ToToon_WithNull_ReturnsEmptyString()
     {
-        var result = ToonConverter.ToToon(null);
+        var result = ToonConverter.ToCompactToon(null);
         result.Should().BeEmpty();
     }
 
     [Fact]
     public void ToToon_WithString_ReturnsFormattedString()
     {
-        var result = ToonConverter.ToToon("hello");
+        var result = ToonConverter.ToCompactToon("hello");
         result.Should().Be("hello");
     }
 
     [Fact]
     public void ToToon_WithInteger_ReturnsFormattedInteger()
     {
-        var result = ToonConverter.ToToon(42);
+        var result = ToonConverter.ToCompactToon(42);
         result.Should().Be("42");
     }
 
     [Fact]
     public void ToToon_WithBoolean_ReturnsLowercaseBoolean()
     {
-        ToonConverter.ToToon(true).Should().Be("true");
-        ToonConverter.ToToon(false).Should().Be("false");
+        ToonConverter.ToCompactToon(true).Should().Be("true");
+        ToonConverter.ToCompactToon(false).Should().Be("false");
     }
 
     [Fact]
     public void ToToon_WithDecimal_ReturnsFormattedDecimal()
     {
-        var result = ToonConverter.ToToon(99.99m);
+        var result = ToonConverter.ToCompactToon(99.99m);
         result.Should().Be("99.99");
     }
 
@@ -82,21 +82,21 @@ public class ToonConverterTests
     [Fact]
     public void ToToon_WithEmptyArray_ReturnsEmptyArrayFormat()
     {
-        var result = ToonConverter.ToToon(Array.Empty<int>());
+        var result = ToonConverter.ToCompactToon(Array.Empty<int>());
         result.Should().Be("~[]");
     }
 
     [Fact]
     public void ToToon_WithIntArray_ReturnsFormattedArray()
     {
-        var result = ToonConverter.ToToon(new[] { 1, 2, 3 });
+        var result = ToonConverter.ToCompactToon(new[] { 1, 2, 3 });
         result.Should().Be("~[1,2,3]");
     }
 
     [Fact]
     public void ToToon_WithStringArray_ReturnsFormattedArray()
     {
-        var result = ToonConverter.ToToon(new[] { "a", "b", "c" });
+        var result = ToonConverter.ToCompactToon(new[] { "a", "b", "c" });
         result.Should().Be("~[a,b,c]");
     }
 
@@ -109,7 +109,7 @@ public class ToonConverterTests
             new User { Name = "Bob", Age = 25, City = "LA" }
         };
 
-        var result = ToonConverter.ToToon(users);
+        var result = ToonConverter.ToCompactToon(users);
         
         result.Should().StartWith("~[");
         result.Should().Contain("Name");
@@ -123,7 +123,7 @@ public class ToonConverterTests
     public void ToToon_WithList_ReturnsFormattedArray()
     {
         var list = new List<int> { 1, 2, 3 };
-        var result = ToonConverter.ToToon(list);
+        var result = ToonConverter.ToCompactToon(list);
         result.Should().Be("~[1,2,3]");
     }
 
@@ -135,7 +135,7 @@ public class ToonConverterTests
     public void ToToon_WithSimpleObject_ReturnsFormattedObject()
     {
         var user = new User { Name = "Alice", Age = 30, City = "NYC" };
-        var result = ToonConverter.ToToon(user);
+        var result = ToonConverter.ToCompactToon(user);
 
         result.Should().StartWith("~");
         result.Should().Contain("Name|Alice");
@@ -147,7 +147,7 @@ public class ToonConverterTests
     public void ToToon_WithAnonymousType_ReturnsFormattedObject()
     {
         var obj = new { Name = "Test", Value = 123 };
-        var result = ToonConverter.ToToon(obj);
+        var result = ToonConverter.ToCompactToon(obj);
 
         result.Should().StartWith("~");
         result.Should().Contain("Name|Test");
@@ -158,7 +158,7 @@ public class ToonConverterTests
     public void ToToon_WithEnumProperty_ReturnsEnumName()
     {
         var entity = new EntityWithEnum { Name = "Test", Status = Status.Active };
-        var result = ToonConverter.ToToon(entity);
+        var result = ToonConverter.ToCompactToon(entity);
 
         result.Should().Contain("Status|Active");
     }
@@ -173,7 +173,7 @@ public class ToonConverterTests
         var options = new ToonOptions { Delimiter = ';' };
         var user = new User { Name = "Alice", Age = 30, City = "NYC" };
         
-        var result = ToonConverter.ToToon(user, options);
+        var result = ToonConverter.ToCompactToon(user, options);
         
         result.Should().Contain("Name;Alice");
     }
@@ -184,7 +184,7 @@ public class ToonConverterTests
         var options = new ToonOptions { ArrayDelimiter = ';' };
         var array = new[] { 1, 2, 3 };
         
-        var result = ToonConverter.ToToon(array, options);
+        var result = ToonConverter.ToCompactToon(array, options);
         
         result.Should().Be("~[1;2;3]");
     }
@@ -195,7 +195,7 @@ public class ToonConverterTests
         var options = new ToonOptions { Prefix = '#' };
         var array = new[] { 1, 2, 3 };
         
-        var result = ToonConverter.ToToon(array, options);
+        var result = ToonConverter.ToCompactToon(array, options);
         
         result.Should().StartWith("#[");
     }
@@ -302,7 +302,7 @@ public class ToonConverterTests
     public void ToToon_WithSpecialCharacters_EscapesCorrectly()
     {
         var user = new User { Name = "O'Brien|Test", Age = 30, City = "New York, NY" };
-        var result = ToonConverter.ToToon(user);
+        var result = ToonConverter.ToCompactToon(user);
 
         // Should escape the pipe and comma in values
         result.Should().Contain("O'Brien");
@@ -312,7 +312,7 @@ public class ToonConverterTests
     public void ToToon_WithDateTime_FormatsCorrectly()
     {
         var date = new DateTime(2025, 1, 15, 10, 30, 0);
-        var result = ToonConverter.ToToon(date);
+        var result = ToonConverter.ToCompactToon(date);
 
         result.Should().Contain("2025");
         result.Should().Contain("01");
@@ -323,7 +323,7 @@ public class ToonConverterTests
     public void ToToon_WithGuid_FormatsCorrectly()
     {
         var guid = Guid.Parse("12345678-1234-1234-1234-123456789012");
-        var result = ToonConverter.ToToon(guid);
+        var result = ToonConverter.ToCompactToon(guid);
 
         result.Should().Contain("12345678");
     }
@@ -339,7 +339,7 @@ public class ToonConverterTests
             User = new User { Name = "Test", Age = 25, City = "NYC" } 
         };
 
-        var action = () => ToonConverter.ToToon(nested, options);
+        var action = () => ToonConverter.ToCompactToon(nested, options);
         
         action.Should().Throw<ToonSerializationException>();
     }
@@ -348,7 +348,7 @@ public class ToonConverterTests
     public void ToToon_WithNullableInt_HandlesNull()
     {
         int? value = null;
-        var result = ToonConverter.ToToon(value);
+        var result = ToonConverter.ToCompactToon(value);
         result.Should().BeEmpty();
     }
 
@@ -356,51 +356,51 @@ public class ToonConverterTests
     public void ToToon_WithNullableInt_HandlesValue()
     {
         int? value = 42;
-        var result = ToonConverter.ToToon(value);
+        var result = ToonConverter.ToCompactToon(value);
         result.Should().Be("42");
     }
 
     [Fact]
     public void ToToon_WithEmptyString_ReturnsEmptyString()
     {
-        var result = ToonConverter.ToToon("");
+        var result = ToonConverter.ToCompactToon("");
         result.Should().BeEmpty();
     }
 
     [Fact]
     public void ToToon_WithWhitespaceString_ReturnsWhitespace()
     {
-        var result = ToonConverter.ToToon("   ");
+        var result = ToonConverter.ToCompactToon("   ");
         result.Should().Be("   ");
     }
 
     [Fact]
     public void ToToon_WithNegativeNumbers_FormatsCorrectly()
     {
-        ToonConverter.ToToon(-42).Should().Be("-42");
-        ToonConverter.ToToon(-99.99m).Should().Be("-99.99");
-        ToonConverter.ToToon(-3.14).Should().Contain("-3.14");
+        ToonConverter.ToCompactToon(-42).Should().Be("-42");
+        ToonConverter.ToCompactToon(-99.99m).Should().Be("-99.99");
+        ToonConverter.ToCompactToon(-3.14).Should().Contain("-3.14");
     }
 
     [Fact]
     public void ToToon_WithZero_FormatsCorrectly()
     {
-        ToonConverter.ToToon(0).Should().Be("0");
-        ToonConverter.ToToon(0.0).Should().Be("0");
-        ToonConverter.ToToon(0m).Should().Be("0");
+        ToonConverter.ToCompactToon(0).Should().Be("0");
+        ToonConverter.ToCompactToon(0.0).Should().Be("0");
+        ToonConverter.ToCompactToon(0m).Should().Be("0");
     }
 
     [Fact]
     public void ToToon_WithLargeNumbers_FormatsCorrectly()
     {
-        ToonConverter.ToToon(long.MaxValue).Should().Be("9223372036854775807");
-        ToonConverter.ToToon(long.MinValue).Should().Be("-9223372036854775808");
+        ToonConverter.ToCompactToon(long.MaxValue).Should().Be("9223372036854775807");
+        ToonConverter.ToCompactToon(long.MinValue).Should().Be("-9223372036854775808");
     }
 
     [Fact]
     public void ToToon_WithFloat_FormatsCorrectly()
     {
-        var result = ToonConverter.ToToon(3.14159f);
+        var result = ToonConverter.ToCompactToon(3.14159f);
         result.Should().Contain("3.14");
     }
 
@@ -408,7 +408,7 @@ public class ToonConverterTests
     public void ToToon_WithDateTimeOffset_FormatsCorrectly()
     {
         var dto = new DateTimeOffset(2025, 6, 15, 14, 30, 0, TimeSpan.FromHours(-5));
-        var result = ToonConverter.ToToon(dto);
+        var result = ToonConverter.ToCompactToon(dto);
         result.Should().Contain("2025");
         result.Should().Contain("06");
         result.Should().Contain("15");
@@ -421,7 +421,7 @@ public class ToonConverterTests
     [Fact]
     public void ToToon_WithSingleElementArray_FormatsCorrectly()
     {
-        var result = ToonConverter.ToToon(new[] { 42 });
+        var result = ToonConverter.ToCompactToon(new[] { 42 });
         result.Should().Be("~[42]");
     }
 
@@ -435,7 +435,7 @@ public class ToonConverterTests
             new User { Name = "Bob", Age = 25, City = "LA" }
         };
 
-        var result = ToonConverter.ToToon(users);
+        var result = ToonConverter.ToCompactToon(users);
         result.Should().Contain("Alice");
         result.Should().Contain("Bob");
     }
@@ -443,21 +443,21 @@ public class ToonConverterTests
     [Fact]
     public void ToToon_WithEmptyStringInArray_FormatsCorrectly()
     {
-        var result = ToonConverter.ToToon(new[] { "a", "", "c" });
+        var result = ToonConverter.ToCompactToon(new[] { "a", "", "c" });
         result.Should().Be("~[a,,c]");
     }
 
     [Fact]
     public void ToToon_WithBoolArray_FormatsCorrectly()
     {
-        var result = ToonConverter.ToToon(new[] { true, false, true });
+        var result = ToonConverter.ToCompactToon(new[] { true, false, true });
         result.Should().Be("~[true,false,true]");
     }
 
     [Fact]
     public void ToToon_WithDecimalArray_FormatsCorrectly()
     {
-        var result = ToonConverter.ToToon(new[] { 1.1m, 2.2m, 3.3m });
+        var result = ToonConverter.ToCompactToon(new[] { 1.1m, 2.2m, 3.3m });
         result.Should().Be("~[1.1,2.2,3.3]");
     }
 
@@ -471,7 +471,7 @@ public class ToonConverterTests
         var nested = new NestedObject { Id = "1", User = null };
         var options = new ToonOptions { IncludeNulls = false };
         
-        var result = ToonConverter.ToToon(nested, options);
+        var result = ToonConverter.ToCompactToon(nested, options);
         
         result.Should().Contain("Id|1");
         result.Should().NotContain("User|");
@@ -483,7 +483,7 @@ public class ToonConverterTests
         var nested = new NestedObject { Id = "1", User = null };
         var options = new ToonOptions { IncludeNulls = true };
         
-        var result = ToonConverter.ToToon(nested, options);
+        var result = ToonConverter.ToCompactToon(nested, options);
         
         result.Should().Contain("Id|1");
         result.Should().Contain("User|");
@@ -493,7 +493,7 @@ public class ToonConverterTests
     public void ToToon_WithEmptyObject_ReturnsEmptyObjectFormat()
     {
         var obj = new EmptyClass();
-        var result = ToonConverter.ToToon(obj);
+        var result = ToonConverter.ToCompactToon(obj);
         result.Should().Be("~{}");
     }
 
@@ -502,9 +502,9 @@ public class ToonConverterTests
     [Fact]
     public void ToToon_WithAllEnumValues_FormatsCorrectly()
     {
-        ToonConverter.ToToon(Status.Active).Should().Be("Active");
-        ToonConverter.ToToon(Status.Inactive).Should().Be("Inactive");
-        ToonConverter.ToToon(Status.Pending).Should().Be("Pending");
+        ToonConverter.ToCompactToon(Status.Active).Should().Be("Active");
+        ToonConverter.ToCompactToon(Status.Inactive).Should().Be("Inactive");
+        ToonConverter.ToCompactToon(Status.Pending).Should().Be("Pending");
     }
 
     #endregion
@@ -521,7 +521,8 @@ public class ToonConverterTests
     [Fact]
     public void FromToon_WithNullString_ReturnsNull()
     {
-        var result = ToonConverter.FromToon<User>(null!);
+        string? nullString = null;
+        var result = ToonConverter.FromToon<User>(nullString!);
         result.Should().BeNull();
     }
 
@@ -645,7 +646,7 @@ public class ToonConverterTests
             new User { Name = "Alice", Age = 30, City = "NYC" }
         };
 
-        var result = ToonConverter.ToToon(users, options);
+        var result = ToonConverter.ToCompactToon(users, options);
         
         // Without header row, should not have the [Header] format
         result.Should().StartWith("~");
@@ -657,7 +658,7 @@ public class ToonConverterTests
         var options = new ToonOptions { DateTimeFormat = "yyyy-MM-dd" };
         var date = new DateTime(2025, 6, 15, 14, 30, 45);
 
-        var result = ToonConverter.ToToon(date, options);
+        var result = ToonConverter.ToCompactToon(date, options);
         
         result.Should().Be("2025-06-15");
     }
@@ -670,7 +671,7 @@ public class ToonConverterTests
     public void RoundTrip_WithSimpleArray_PreservesData()
     {
         var original = new[] { 1, 2, 3, 4, 5 };
-        var toon = ToonConverter.ToToon(original);
+        var toon = ToonConverter.ToCompactToon(original);
         var result = ToonConverter.FromToon<int[]>(toon);
 
         result.Should().BeEquivalentTo(original);
@@ -685,7 +686,7 @@ public class ToonConverterTests
             new User { Name = "Bob", Age = 25, City = "LA" }
         };
 
-        var toon = ToonConverter.ToToon(original);
+        var toon = ToonConverter.ToCompactToon(original);
         var result = ToonConverter.FromToon<User[]>(toon);
 
         result.Should().HaveCount(2);
@@ -699,7 +700,7 @@ public class ToonConverterTests
     public void RoundTrip_WithBoolArray_PreservesData()
     {
         var original = new[] { true, false, true, false };
-        var toon = ToonConverter.ToToon(original);
+        var toon = ToonConverter.ToCompactToon(original);
         var result = ToonConverter.FromToon<bool[]>(toon);
 
         result.Should().BeEquivalentTo(original);
@@ -709,7 +710,7 @@ public class ToonConverterTests
     public void RoundTrip_WithStringArray_PreservesData()
     {
         var original = new[] { "hello", "world", "test" };
-        var toon = ToonConverter.ToToon(original);
+        var toon = ToonConverter.ToCompactToon(original);
         var result = ToonConverter.FromToon<string[]>(toon);
 
         result.Should().BeEquivalentTo(original);
@@ -719,7 +720,7 @@ public class ToonConverterTests
     public void RoundTrip_WithDecimalArray_PreservesData()
     {
         var original = new[] { 1.5m, 2.75m, 3.125m };
-        var toon = ToonConverter.ToToon(original);
+        var toon = ToonConverter.ToCompactToon(original);
         var result = ToonConverter.FromToon<decimal[]>(toon);
 
         result.Should().BeEquivalentTo(original);
@@ -729,7 +730,7 @@ public class ToonConverterTests
     public void RoundTrip_WithLargeArray_PreservesData()
     {
         var original = Enumerable.Range(1, 1000).ToArray();
-        var toon = ToonConverter.ToToon(original);
+        var toon = ToonConverter.ToCompactToon(original);
         var result = ToonConverter.FromToon<int[]>(toon);
 
         result.Should().BeEquivalentTo(original);
@@ -744,7 +745,7 @@ public class ToonConverterTests
             new Product { Sku = "SKU-002", Name = "Gadget", Price = 19.99m, Quantity = 50 }
         };
 
-        var toon = ToonConverter.ToToon(original);
+        var toon = ToonConverter.ToCompactToon(original);
         var result = ToonConverter.FromToon<Product[]>(toon);
 
         result.Should().HaveCount(2);
@@ -795,6 +796,348 @@ public class ToonConverterTests
 
     #endregion
 
+    #region TryFromToon Tests
+
+    [Fact]
+    public void TryFromToon_WithValidInput_ReturnsTrue()
+    {
+        var toon = "~[1,2,3]";
+        var success = ToonConverter.TryFromToon<int[]>(toon, out var result);
+
+        success.Should().BeTrue();
+        result.Should().BeEquivalentTo(new[] { 1, 2, 3 });
+    }
+
+    [Fact]
+    public void TryFromToon_WithInvalidInput_ReturnsFalse()
+    {
+        var success = ToonConverter.TryFromToon<int[]>("invalid data", out var result);
+
+        success.Should().BeFalse();
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void TryFromToon_WithEmptyString_ReturnsTrueWithNull()
+    {
+        var success = ToonConverter.TryFromToon<User>("", out var result);
+
+        success.Should().BeTrue();
+        result.Should().BeNull();
+    }
+
+    #endregion
+
+    #region IsValidToon Tests
+
+    [Fact]
+    public void IsValidToon_WithValidArray_ReturnsTrue()
+    {
+        ToonConverter.IsValidToon("~[1,2,3]").Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsValidToon_WithValidObject_ReturnsTrue()
+    {
+        ToonConverter.IsValidToon("~Name|Alice,Age|30").Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsValidToon_WithInvalidPrefix_ReturnsFalse()
+    {
+        ToonConverter.IsValidToon("[1,2,3]").Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsValidToon_WithEmptyString_ReturnsFalse()
+    {
+        ToonConverter.IsValidToon("").Should().BeFalse();
+        ToonConverter.IsValidToon("   ").Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsValidToon_WithCustomPrefix_ValidatesCorrectly()
+    {
+        var options = new ToonOptions { Prefix = '#' };
+        ToonConverter.IsValidToon("#[1,2,3]", options).Should().BeTrue();
+        ToonConverter.IsValidToon("~[1,2,3]", options).Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Async Tests
+
+    [Fact]
+    public async Task ToCompactToonAsync_WritesToStream()
+    {
+        var data = new[] { 1, 2, 3 };
+        using var stream = new MemoryStream();
+
+        await ToonConverter.ToCompactToonAsync(stream, data);
+
+        stream.Position = 0;
+        using var reader = new StreamReader(stream);
+        var result = await reader.ReadToEndAsync();
+
+        result.Should().Be("~[1,2,3]");
+    }
+
+    [Fact]
+    public async Task FromToonAsync_ReadsFromStream()
+    {
+        var toon = "~[1,2,3]";
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(toon));
+
+        var result = await ToonConverter.FromToonAsync<int[]>(stream);
+
+        result.Should().BeEquivalentTo(new[] { 1, 2, 3 });
+    }
+
+    [Fact]
+    public async Task RoundTrip_Async_PreservesData()
+    {
+        var original = new[]
+        {
+            new User { Name = "Alice", Age = 30, City = "NYC" },
+            new User { Name = "Bob", Age = 25, City = "LA" }
+        };
+
+        using var stream = new MemoryStream();
+        await ToonConverter.ToCompactToonAsync(stream, original);
+
+        stream.Position = 0;
+        var result = await ToonConverter.FromToonAsync<User[]>(stream);
+
+        result.Should().HaveCount(2);
+        result![0].Name.Should().Be("Alice");
+        result[1].Name.Should().Be("Bob");
+    }
+
+    #endregion
+
+    #region TextReader/TextWriter Tests
+
+    [Fact]
+    public void ToToon_WithTextWriter_WritesCorrectly()
+    {
+        var data = new[] { 1, 2, 3 };
+        using var writer = new StringWriter();
+
+        ToonConverter.ToCompactToon(writer, data);
+
+        writer.ToString().Should().Be("~[1,2,3]");
+    }
+
+    [Fact]
+    public void FromToon_WithTextReader_ReadsCorrectly()
+    {
+        var toon = "~[1,2,3]";
+        using var reader = new StringReader(toon);
+
+        var result = ToonConverter.FromToon<int[]>(reader);
+
+        result.Should().BeEquivalentTo(new[] { 1, 2, 3 });
+    }
+
+    #endregion
+
+    #region ToonOptions Static Factories
+
+    [Fact]
+    public void ToonOptions_MinimalTokens_HasCorrectDefaults()
+    {
+        var options = ToonOptions.MinimalTokens;
+
+        options.Delimiter.Should().Be('|');
+        options.ArrayDelimiter.Should().Be(',');
+        options.Prefix.Should().Be('~');
+        options.IncludeNulls.Should().BeFalse();
+        options.UseHeaderRow.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ToonOptions_StrictMode_HasCorrectDefaults()
+    {
+        var options = ToonOptions.StrictMode;
+
+        options.Strict.Should().BeTrue();
+        options.PropertyNameCaseInsensitive.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ToonOptions_NewProperties_HaveCorrectDefaults()
+    {
+        var options = new ToonOptions();
+
+        options.Strict.Should().BeFalse();
+        options.EscapeCharacter.Should().Be('\\');
+        options.IncludeTypeInfo.Should().BeFalse();
+        options.MaxOutputLength.Should().Be(0);
+    }
+
+    #endregion
+
+    #region Standard TOON Format Tests
+
+    [Fact]
+    public void ToToon_WithArray_ReturnsStandardFormat()
+    {
+        var users = new[]
+        {
+            new User { Name = "Alice", Age = 30, City = "NYC" },
+            new User { Name = "Bob", Age = 25, City = "LA" }
+        };
+
+        var result = ToonConverter.ToToon(users);
+
+        // Standard format uses indentation and tabular headers
+        result.Should().Contain("{");  // Field list in braces
+        result.Should().Contain("}:");
+        result.Should().Contain("Alice");
+        result.Should().Contain("Bob");
+    }
+
+    [Fact]
+    public void ToToon_WithObject_ReturnsStandardFormat()
+    {
+        var user = new User { Name = "Alice", Age = 30, City = "NYC" };
+        var result = ToonConverter.ToToon(user);
+
+        // Standard format uses key: value with proper spacing
+        result.Should().Contain("Name: Alice");
+        result.Should().Contain("Age: 30");
+        result.Should().Contain("City: NYC");
+    }
+
+    [Fact]
+    public void ToToon_WithPrimitiveArray_ReturnsInlineFormat()
+    {
+        var result = ToonConverter.ToToon(new[] { 1, 2, 3 });
+
+        result.Should().Contain("[3]:");
+        result.Should().Contain("1,2,3");
+    }
+
+    [Fact]
+    public void Serialize_WithStandardFormat_ReturnsStandardToon()
+    {
+        var data = new[] { 1, 2, 3 };
+        var result = ToonConverter.Serialize(data, ToonFormat.Standard);
+
+        result.Should().Contain("[3]:");
+    }
+
+    [Fact]
+    public void Serialize_WithCompactFormat_ReturnsCompactToon()
+    {
+        var data = new[] { 1, 2, 3 };
+        var result = ToonConverter.Serialize(data, ToonFormat.Compact);
+
+        result.Should().StartWith("~");
+    }
+
+    #endregion
+
+    #region Format Comparison Tests
+
+    [Fact]
+    public void CompareFormats_ReturnsAllThreeFormats()
+    {
+        var users = new[]
+        {
+            new User { Name = "Alice", Age = 30, City = "NYC" },
+            new User { Name = "Bob", Age = 25, City = "LA" }
+        };
+
+        var stats = ToonConverter.CompareFormats(users);
+
+        stats.JsonTokens.Should().BeGreaterThan(0);
+        stats.StandardToonTokens.Should().BeGreaterThan(0);
+        stats.CompactToonTokens.Should().BeGreaterThan(0);
+
+        // Compact should be most efficient
+        stats.CompactToonTokens.Should().BeLessThanOrEqualTo(stats.StandardToonTokens);
+        stats.StandardToonTokens.Should().BeLessThan(stats.JsonTokens);
+    }
+
+    [Fact]
+    public void CompareFormats_WithNull_ReturnsZeroStats()
+    {
+        var stats = ToonConverter.CompareFormats(null);
+
+        stats.JsonTokens.Should().Be(0);
+        stats.StandardToonTokens.Should().Be(0);
+        stats.CompactToonTokens.Should().Be(0);
+    }
+
+    [Fact]
+    public void CompareFormats_ShowsBothFormatsSaveTokens()
+    {
+        var products = Enumerable.Range(1, 50).Select(i => new Product
+        {
+            Sku = $"SKU-{i:D5}",
+            Name = $"Product {i}",
+            Price = 9.99m + i,
+            Quantity = i * 10
+        }).ToArray();
+
+        var stats = ToonConverter.CompareFormats(products);
+
+        // Both formats should save significant tokens vs JSON
+        stats.StandardToonSaved.Should().BeGreaterThan(0);
+        stats.CompactToonSaved.Should().BeGreaterThan(0);
+        stats.StandardToonReductionPercent.Should().BeGreaterThan(30);
+        stats.CompactToonReductionPercent.Should().BeGreaterThan(30);
+        
+        // Both outputs should be non-empty and different from JSON
+        stats.StandardToonOutput.Should().NotBeEmpty();
+        stats.CompactToonOutput.Should().NotBeEmpty();
+        stats.StandardToonOutput.Should().NotBe(stats.JsonOutput);
+        stats.CompactToonOutput.Should().NotBe(stats.JsonOutput);
+    }
+
+    [Fact]
+    public void CompareFormats_ToString_FormatsCorrectly()
+    {
+        var data = new[] { new User { Name = "Test", Age = 30, City = "NYC" } };
+        var stats = ToonConverter.CompareFormats(data);
+
+        var str = stats.ToString();
+        str.Should().Contain("JSON:");
+        str.Should().Contain("Standard TOON:");
+        str.Should().Contain("Compact TOON:");
+        str.Should().Contain("saved");
+    }
+
+    [Fact]
+    public void GetTokenReduction_WithFormat_UsesCorrectFormat()
+    {
+        var data = new[] { 1, 2, 3 };
+        
+        var standardStats = ToonConverter.GetTokenReduction(data, ToonFormat.Standard);
+        var compactStats = ToonConverter.GetTokenReduction(data, ToonFormat.Compact);
+
+        // Outputs should be different
+        standardStats.ToonOutput.Should().NotBe(compactStats.ToonOutput);
+        
+        // Compact should have prefix
+        compactStats.ToonOutput.Should().StartWith("~");
+    }
+
+    #endregion
+
+    #region ToonFormat Enum Tests
+
+    [Fact]
+    public void ToonFormat_HasExpectedValues()
+    {
+        Enum.GetValues<ToonFormat>().Should().HaveCount(2);
+        Enum.IsDefined(ToonFormat.Standard).Should().BeTrue();
+        Enum.IsDefined(ToonFormat.Compact).Should().BeTrue();
+    }
+
+    #endregion
+
     #region Performance Sanity Tests
 
     [Fact]
@@ -808,7 +1151,7 @@ public class ToonConverterTests
         }).ToArray();
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        var result = ToonConverter.ToToon(users);
+        var result = ToonConverter.ToCompactToon(users);
         stopwatch.Stop();
 
         result.Should().NotBeEmpty();

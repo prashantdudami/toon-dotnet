@@ -5,13 +5,20 @@ This folder contains example applications demonstrating how to use the TOON Toke
 ## Prerequisites
 
 - .NET 8.0 SDK or later
-- Install the package: `dotnet add package Toon.TokenOptimizer --version 1.0.0`
+- Install the package: `dotnet add package Toon.TokenOptimizer`
+
+## Two Formats
+
+| Format | Method | Best For |
+|--------|--------|----------|
+| **Standard** | `ToToon()` | Human review, debugging, logging |
+| **Compact** | `ToCompactToon()` | LLM API calls, maximum token savings |
 
 ## Examples
 
 ### 1. QuickStart
 
-Basic usage of TOON Token Optimizer - converting data and measuring token savings.
+Basic usage of TOON Token Optimizer - comparing both formats.
 
 ```bash
 cd QuickStart
@@ -19,9 +26,9 @@ dotnet run
 ```
 
 **Demonstrates:**
-- Converting arrays of objects to TOON format
-- Getting token reduction statistics
-- Using custom options
+- Standard vs Compact TOON formats
+- Format comparison with `CompareFormats()`
+- Explicit format selection with `Serialize()`
 
 ---
 

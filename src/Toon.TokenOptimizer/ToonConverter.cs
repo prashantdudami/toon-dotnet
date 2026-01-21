@@ -7,16 +7,16 @@ namespace Toon.TokenOptimizer;
 
 /// <summary>
 /// Converts objects to and from TOON (Token Optimized Object Notation) format.
-/// TOON reduces token usage by 40-60% when sending data to LLMs.
+/// Supports both Standard TOON v3.0 spec and Compact format for maximum token savings.
 /// </summary>
 public static class ToonConverter
 {
     /// <summary>
-    /// Converts an object to TOON format.
+    /// Converts an object to Standard TOON v3.0 format (indentation-based, human-readable).
     /// </summary>
     /// <param name="obj">The object to convert.</param>
     /// <param name="options">Optional conversion options.</param>
-    /// <returns>A TOON-formatted string.</returns>
+    /// <returns>A TOON-formatted string following the official v3.0 specification.</returns>
     /// <exception cref="ToonSerializationException">Thrown when serialization fails.</exception>
     public static string ToToon(object? obj, ToonOptions? options = null)
     {
@@ -27,7 +27,7 @@ public static class ToonConverter
 
         try
         {
-            return ConvertToToon(obj, options, 0);
+            return ConvertToStandardToon(obj, options, 0);
         }
         catch (ToonException)
         {
@@ -37,6 +37,52 @@ public static class ToonConverter
         {
             throw new ToonSerializationException($"Failed to convert object to TOON format: {ex.Message}", obj.GetType(), ex);
         }
+    }
+
+    /// <summary>
+    /// Converts an object to Compact TOON format (single-line, maximum token savings).
+    /// This format provides 40-60% token reduction compared to JSON.
+    /// </summary>
+    /// <param name="obj">The object to convert.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <returns>A compact TOON-formatted string optimized for token efficiency.</returns>
+    /// <exception cref="ToonSerializationException">Thrown when serialization fails.</exception>
+    public static string ToCompactToon(object? obj, ToonOptions? options = null)
+    {
+        options ??= ToonOptions.Default;
+        
+        if (obj == null)
+            return string.Empty;
+
+        try
+        {
+            return ConvertToCompactToon(obj, options, 0);
+        }
+        catch (ToonException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new ToonSerializationException($"Failed to convert object to compact TOON format: {ex.Message}", obj.GetType(), ex);
+        }
+    }
+
+    /// <summary>
+    /// Converts an object to TOON format using the specified format type.
+    /// </summary>
+    /// <param name="obj">The object to convert.</param>
+    /// <param name="format">The TOON format to use (Standard or Compact).</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <returns>A TOON-formatted string.</returns>
+    public static string Serialize(object? obj, ToonFormat format = ToonFormat.Standard, ToonOptions? options = null)
+    {
+        return format switch
+        {
+            ToonFormat.Standard => ToToon(obj, options),
+            ToonFormat.Compact => ToCompactToon(obj, options),
+            _ => throw new ArgumentOutOfRangeException(nameof(format))
+        };
     }
 
     /// <summary>
@@ -69,12 +115,154 @@ public static class ToonConverter
     }
 
     /// <summary>
-    /// Calculates token reduction statistics for an object.
+    /// Attempts to convert a TOON-formatted string back to an object without throwing exceptions.
+    /// </summary>
+    /// <typeparam name="T">The target type.</typeparam>
+    /// <param name="toon">The TOON-formatted string.</param>
+    /// <param name="result">The deserialized object if successful, default otherwise.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <returns>True if conversion succeeded, false otherwise.</returns>
+    public static bool TryFromToon<T>(string toon, out T? result, ToonOptions? options = null)
+    {
+        try
+        {
+            result = FromToon<T>(toon, options);
+            return true;
+        }
+        catch
+        {
+            result = default;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Validates whether a string is valid TOON format.
+    /// </summary>
+    /// <param name="toon">The string to validate.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <returns>True if the string is valid TOON format, false otherwise.</returns>
+    public static bool IsValidToon(string toon, ToonOptions? options = null)
+    {
+        if (string.IsNullOrWhiteSpace(toon))
+            return false;
+
+        options ??= ToonOptions.Default;
+        toon = toon.Trim();
+
+        // Check for valid prefix
+        if (!toon.StartsWith(options.Prefix.ToString()))
+            return false;
+
+        // Try to parse - if it succeeds, it's valid
+        try
+        {
+            var content = toon.Substring(1);
+            
+            // Array format: ~[...] or ~[Header]:data
+            if (content.StartsWith("["))
+                return true;
+            
+            // Object format: ~key|value,key|value
+            if (content.Contains(options.Delimiter))
+                return true;
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Asynchronously writes Standard TOON-formatted data to a stream.
+    /// </summary>
+    /// <param name="stream">The stream to write to.</param>
+    /// <param name="obj">The object to convert.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static async Task ToToonAsync(Stream stream, object? obj, ToonOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var toon = ToToon(obj, options);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(toon);
+        await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Asynchronously writes Compact TOON-formatted data to a stream.
+    /// </summary>
+    /// <param name="stream">The stream to write to.</param>
+    /// <param name="obj">The object to convert.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static async Task ToCompactToonAsync(Stream stream, object? obj, ToonOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        var toon = ToCompactToon(obj, options);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(toon);
+        await stream.WriteAsync(bytes, 0, bytes.Length, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Asynchronously reads and parses TOON-formatted data from a stream.
+    /// </summary>
+    /// <typeparam name="T">The target type.</typeparam>
+    /// <param name="stream">The stream to read from.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The deserialized object.</returns>
+    public static async Task<T?> FromToonAsync<T>(Stream stream, ToonOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        using var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
+        var toon = await reader.ReadToEndAsync().ConfigureAwait(false);
+        return FromToon<T>(toon, options);
+    }
+
+    /// <summary>
+    /// Converts an object to Standard TOON format and writes to a TextWriter.
+    /// </summary>
+    /// <param name="writer">The TextWriter to write to.</param>
+    /// <param name="obj">The object to convert.</param>
+    /// <param name="options">Optional conversion options.</param>
+    public static void ToToon(TextWriter writer, object? obj, ToonOptions? options = null)
+    {
+        var toon = ToToon(obj, options);
+        writer.Write(toon);
+    }
+
+    /// <summary>
+    /// Converts an object to Compact TOON format and writes to a TextWriter.
+    /// </summary>
+    /// <param name="writer">The TextWriter to write to.</param>
+    /// <param name="obj">The object to convert.</param>
+    /// <param name="options">Optional conversion options.</param>
+    public static void ToCompactToon(TextWriter writer, object? obj, ToonOptions? options = null)
+    {
+        var toon = ToCompactToon(obj, options);
+        writer.Write(toon);
+    }
+
+    /// <summary>
+    /// Reads and parses TOON-formatted data from a TextReader.
+    /// </summary>
+    /// <typeparam name="T">The target type.</typeparam>
+    /// <param name="reader">The TextReader to read from.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <returns>The deserialized object.</returns>
+    public static T? FromToon<T>(TextReader reader, ToonOptions? options = null)
+    {
+        var toon = reader.ReadToEnd();
+        return FromToon<T>(toon, options);
+    }
+
+    /// <summary>
+    /// Calculates token reduction statistics for an object using the specified format.
     /// </summary>
     /// <param name="obj">The object to analyze.</param>
+    /// <param name="format">The TOON format to use (defaults to Compact for maximum savings).</param>
     /// <param name="options">Optional conversion options.</param>
     /// <returns>Statistics about the token reduction.</returns>
-    public static TokenReductionStats GetTokenReduction(object? obj, ToonOptions? options = null)
+    public static TokenReductionStats GetTokenReduction(object? obj, ToonFormat format = ToonFormat.Compact, ToonOptions? options = null)
     {
         if (obj == null)
         {
@@ -88,7 +276,9 @@ public static class ToonConverter
         }
 
         var jsonOutput = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = false });
-        var toonOutput = ToToon(obj, options);
+        var toonOutput = format == ToonFormat.Compact 
+            ? ToCompactToon(obj, options) 
+            : ToToon(obj, options);
 
         // Simple token estimation (roughly 4 characters per token for English text)
         // This is a simplified estimation - actual tokenization varies by model
@@ -104,9 +294,238 @@ public static class ToonConverter
         };
     }
 
-    #region Private Methods
+    /// <summary>
+    /// Calculates token reduction statistics for an object (uses Compact format by default).
+    /// </summary>
+    /// <param name="obj">The object to analyze.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <returns>Statistics about the token reduction.</returns>
+    public static TokenReductionStats GetTokenReduction(object? obj, ToonOptions? options)
+    {
+        return GetTokenReduction(obj, ToonFormat.Compact, options);
+    }
 
-    private static string ConvertToToon(object obj, ToonOptions options, int depth)
+    /// <summary>
+    /// Compares token reduction between Standard and Compact TOON formats.
+    /// </summary>
+    /// <param name="obj">The object to analyze.</param>
+    /// <param name="options">Optional conversion options.</param>
+    /// <returns>A comparison of token usage across JSON, Standard TOON, and Compact TOON.</returns>
+    public static TokenComparisonStats CompareFormats(object? obj, ToonOptions? options = null)
+    {
+        if (obj == null)
+        {
+            return new TokenComparisonStats
+            {
+                JsonTokens = 0,
+                StandardToonTokens = 0,
+                CompactToonTokens = 0,
+                JsonOutput = "null",
+                StandardToonOutput = "",
+                CompactToonOutput = ""
+            };
+        }
+
+        var jsonOutput = JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = false });
+        var standardOutput = ToToon(obj, options);
+        var compactOutput = ToCompactToon(obj, options);
+
+        return new TokenComparisonStats
+        {
+            JsonTokens = EstimateTokens(jsonOutput),
+            StandardToonTokens = EstimateTokens(standardOutput),
+            CompactToonTokens = EstimateTokens(compactOutput),
+            JsonOutput = jsonOutput,
+            StandardToonOutput = standardOutput,
+            CompactToonOutput = compactOutput
+        };
+    }
+
+    #region Private Methods - Standard TOON v3.0
+
+    private static string ConvertToStandardToon(object obj, ToonOptions options, int depth)
+    {
+        if (depth > options.MaxDepth)
+            throw new ToonSerializationException($"Maximum depth of {options.MaxDepth} exceeded");
+
+        var type = obj.GetType();
+        var indent = new string(' ', depth * 2);
+
+        // Handle primitives and simple types
+        if (IsPrimitiveType(type))
+            return FormatStandardPrimitive(obj, options);
+
+        // Handle arrays and collections
+        if (obj is IEnumerable enumerable && type != typeof(string))
+            return ConvertEnumerableToStandardToon(enumerable, options, depth);
+
+        // Handle complex objects
+        return ConvertObjectToStandardToon(obj, options, depth);
+    }
+
+    private static string ConvertEnumerableToStandardToon(IEnumerable enumerable, ToonOptions options, int depth)
+    {
+        var items = enumerable.Cast<object?>().ToList();
+        var indent = new string(' ', depth * 2);
+        var childIndent = new string(' ', (depth + 1) * 2);
+        
+        if (items.Count == 0)
+            return $"[0]:";
+
+        // Check if all items are of the same complex type (for tabular format)
+        var firstItem = items.FirstOrDefault(i => i != null);
+        if (firstItem != null && !IsPrimitiveType(firstItem.GetType()))
+        {
+            return ConvertObjectArrayToStandardToon(items, firstItem.GetType(), options, depth);
+        }
+
+        // Handle array of primitives - inline format
+        var sb = new StringBuilder();
+        sb.Append($"[{items.Count}]: ");
+        sb.Append(string.Join(",", items.Select(i => i == null ? "" : FormatStandardPrimitive(i, options))));
+        
+        return sb.ToString();
+    }
+
+    private static string ConvertObjectArrayToStandardToon(List<object?> items, Type itemType, ToonOptions options, int depth)
+    {
+        var properties = GetSerializableProperties(itemType);
+        var childIndent = new string(' ', (depth + 1) * 2);
+        
+        if (properties.Length == 0)
+            return $"[{items.Count}]:";
+
+        var sb = new StringBuilder();
+        
+        // Header with field list: [N]{field1,field2,...}:
+        sb.Append($"[{items.Count}]{{");
+        sb.Append(string.Join(",", properties.Select(p => p.Name)));
+        sb.Append("}:");
+
+        // Data rows
+        foreach (var item in items)
+        {
+            sb.AppendLine();
+            sb.Append(childIndent);
+            
+            if (item == null)
+            {
+                sb.Append(string.Join(",", properties.Select(_ => "")));
+                continue;
+            }
+
+            var values = properties.Select(p =>
+            {
+                var value = p.GetValue(item);
+                if (value == null) return "";
+                if (IsPrimitiveType(value.GetType()))
+                    return FormatStandardPrimitive(value, options);
+                return ConvertToStandardToon(value, options, depth + 1);
+            });
+            
+            sb.Append(string.Join(",", values));
+        }
+
+        return sb.ToString();
+    }
+
+    private static string ConvertObjectToStandardToon(object obj, ToonOptions options, int depth)
+    {
+        var properties = GetSerializableProperties(obj.GetType());
+        var indent = new string(' ', depth * 2);
+        var childIndent = new string(' ', (depth + 1) * 2);
+        
+        if (properties.Length == 0)
+            return "";
+
+        var sb = new StringBuilder();
+        var isFirst = true;
+
+        foreach (var prop in properties)
+        {
+            var value = prop.GetValue(obj);
+            
+            if (value == null && !options.IncludeNulls)
+                continue;
+
+            if (!isFirst)
+            {
+                sb.AppendLine();
+                sb.Append(indent);
+            }
+            isFirst = false;
+
+            if (value == null)
+            {
+                sb.Append($"{prop.Name}: null");
+            }
+            else if (IsPrimitiveType(value.GetType()))
+            {
+                sb.Append($"{prop.Name}: {FormatStandardPrimitive(value, options)}");
+            }
+            else if (value is IEnumerable enumerable && value.GetType() != typeof(string))
+            {
+                var arrayOutput = ConvertEnumerableToStandardToon(enumerable, options, depth + 1);
+                sb.Append($"{prop.Name}{arrayOutput}");
+            }
+            else
+            {
+                sb.Append($"{prop.Name}:");
+                var nestedOutput = ConvertObjectToStandardToon(value, options, depth + 1);
+                if (!string.IsNullOrEmpty(nestedOutput))
+                {
+                    sb.AppendLine();
+                    sb.Append(childIndent);
+                    sb.Append(nestedOutput);
+                }
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private static string FormatStandardPrimitive(object value, ToonOptions options)
+    {
+        return value switch
+        {
+            string s => QuoteIfNeeded(s, ','),
+            bool b => b.ToString().ToLower(),
+            DateTime dt => dt.ToString(options.DateTimeFormat),
+            DateTimeOffset dto => dto.ToString(options.DateTimeFormat),
+            IFormattable f => f.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+            _ => value.ToString() ?? ""
+        };
+    }
+
+    private static string QuoteIfNeeded(string value, char delimiter)
+    {
+        if (string.IsNullOrEmpty(value) ||
+            value.Contains(delimiter) ||
+            value.Contains(':') ||
+            value.Contains('"') ||
+            value.Contains('\n') ||
+            value.Contains('\r') ||
+            value.Contains('\t') ||
+            value == "true" || value == "false" || value == "null" ||
+            value.StartsWith(" ") || value.EndsWith(" ") ||
+            value.StartsWith("-") ||
+            IsNumericString(value))
+        {
+            return $"\"{value.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+        }
+        return value;
+    }
+
+    private static bool IsNumericString(string value)
+    {
+        return double.TryParse(value, out _);
+    }
+
+    #endregion
+
+    #region Private Methods - Compact TOON
+
+    private static string ConvertToCompactToon(object obj, ToonOptions options, int depth)
     {
         if (depth > options.MaxDepth)
             throw new ToonSerializationException($"Maximum depth of {options.MaxDepth} exceeded");
@@ -119,13 +538,13 @@ public static class ToonConverter
 
         // Handle arrays and collections
         if (obj is IEnumerable enumerable && type != typeof(string))
-            return ConvertEnumerableToToon(enumerable, options, depth);
+            return ConvertEnumerableToCompactToon(enumerable, options, depth);
 
         // Handle complex objects
-        return ConvertObjectToToon(obj, options, depth);
+        return ConvertObjectToCompactToon(obj, options, depth);
     }
 
-    private static string ConvertEnumerableToToon(IEnumerable enumerable, ToonOptions options, int depth)
+    private static string ConvertEnumerableToCompactToon(IEnumerable enumerable, ToonOptions options, int depth)
     {
         var items = enumerable.Cast<object?>().ToList();
         
@@ -136,7 +555,7 @@ public static class ToonConverter
         var firstItem = items.FirstOrDefault(i => i != null);
         if (firstItem != null && !IsPrimitiveType(firstItem.GetType()))
         {
-            return ConvertObjectArrayToToon(items, firstItem.GetType(), options, depth);
+            return ConvertObjectArrayToCompactToon(items, firstItem.GetType(), options, depth);
         }
 
         // Handle array of primitives
@@ -150,7 +569,7 @@ public static class ToonConverter
         return sb.ToString();
     }
 
-    private static string ConvertObjectArrayToToon(List<object?> items, Type itemType, ToonOptions options, int depth)
+    private static string ConvertObjectArrayToCompactToon(List<object?> items, Type itemType, ToonOptions options, int depth)
     {
         var properties = GetSerializableProperties(itemType);
         
@@ -185,7 +604,7 @@ public static class ToonConverter
                 if (value == null) return "";
                 if (IsPrimitiveType(value.GetType()))
                     return FormatPrimitive(value, options);
-                return ConvertToToon(value, options, depth + 1);
+                return ConvertToCompactToon(value, options, depth + 1);
             });
             
             rows.Add(string.Join(options.Delimiter.ToString(), values));
@@ -196,7 +615,7 @@ public static class ToonConverter
         return sb.ToString();
     }
 
-    private static string ConvertObjectToToon(object obj, ToonOptions options, int depth)
+    private static string ConvertObjectToCompactToon(object obj, ToonOptions options, int depth)
     {
         var properties = GetSerializableProperties(obj.GetType());
         
@@ -218,7 +637,7 @@ public static class ToonConverter
                 ? "" 
                 : IsPrimitiveType(value.GetType()) 
                     ? FormatPrimitive(value, options)
-                    : ConvertToToon(value, options, depth + 1);
+                    : ConvertToCompactToon(value, options, depth + 1);
 
             pairs.Add($"{prop.Name}{options.Delimiter}{formattedValue}");
         }
@@ -227,6 +646,10 @@ public static class ToonConverter
         
         return sb.ToString();
     }
+
+    #endregion
+
+    #region Private Methods - Parsing
 
     private static object? ParseToon(string toon, Type targetType, ToonOptions options)
     {

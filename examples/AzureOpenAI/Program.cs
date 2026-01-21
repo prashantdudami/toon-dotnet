@@ -36,19 +36,25 @@ var salesData = new[]
 };
 
 // -----------------------------------------------------------------------------
-// Step 2: Convert to TOON format and see the savings
+// Step 2: Convert to both TOON formats and compare savings
 // -----------------------------------------------------------------------------
 
-string toonData = ToonConverter.ToToon(salesData);
-var stats = ToonConverter.GetTokenReduction(salesData);
+var comparison = ToonConverter.CompareFormats(salesData);
 
-Console.WriteLine("Token Reduction:");
-Console.WriteLine($"  JSON: {stats.JsonTokens} tokens");
-Console.WriteLine($"  TOON: {stats.ToonTokens} tokens");
-Console.WriteLine($"  Saved: {stats.TokensSaved} tokens ({stats.ReductionPercent:F1}%)\n");
+Console.WriteLine("Token Comparison:");
+Console.WriteLine($"  JSON:          {comparison.JsonTokens} tokens");
+Console.WriteLine($"  Standard TOON: {comparison.StandardToonTokens} tokens ({comparison.StandardToonReductionPercent:F1}% saved)");
+Console.WriteLine($"  Compact TOON:  {comparison.CompactToonTokens} tokens ({comparison.CompactToonReductionPercent:F1}% saved)\n");
 
-Console.WriteLine("TOON Data:");
-Console.WriteLine(toonData);
+// Use Compact TOON for API calls (maximum savings)
+string compactData = ToonConverter.ToCompactToon(salesData);
+Console.WriteLine("Compact TOON Data (for API calls):");
+Console.WriteLine(compactData);
+Console.WriteLine();
+
+// Standard TOON for debugging/logging
+Console.WriteLine("Standard TOON Data (for debugging):");
+Console.WriteLine(ToonConverter.ToToon(salesData));
 Console.WriteLine();
 
 // -----------------------------------------------------------------------------
@@ -58,12 +64,12 @@ Console.WriteLine();
 string prompt = $"""
     Analyze this sales data and provide insights.
     
-    The data is in TOON format (Token Optimized Object Notation):
-    - First line shows the schema (column names separated by |)
-    - Following lines are data rows (values separated by |)
+    The data is in TOON Compact format (Token Optimized Object Notation):
+    - Schema shown in brackets [field1|field2|...]
+    - Data rows follow, pipe-separated values
     
     Data:
-    {toonData}
+    {compactData}
     
     Please provide:
     1. Overall sales trends

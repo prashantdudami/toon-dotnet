@@ -1,7 +1,7 @@
 // ============================================================================
 // TOON Token Optimizer - Quick Start Example
 // ============================================================================
-// Install: dotnet add package Toon.TokenOptimizer --version 1.0.0
+// Install: dotnet add package Toon.TokenOptimizer
 // Run:     dotnet run
 // ============================================================================
 
@@ -10,7 +10,7 @@ using Toon.TokenOptimizer;
 Console.WriteLine("=== TOON Token Optimizer - Quick Start ===\n");
 
 // -----------------------------------------------------------------------------
-// Example 1: Convert a simple array of objects to TOON
+// Example 1: Two Formats - Standard and Compact
 // -----------------------------------------------------------------------------
 
 var customers = new[]
@@ -20,29 +20,33 @@ var customers = new[]
     new { Name = "Charlie", Age = 35, City = "Chicago" }
 };
 
-Console.WriteLine("Original Data (3 customers):");
-Console.WriteLine("-----------------------------");
+Console.WriteLine("STANDARD TOON (human-readable, official v3.0 spec):");
+Console.WriteLine("---------------------------------------------------");
+string standardToon = ToonConverter.ToToon(customers);
+Console.WriteLine(standardToon);
+Console.WriteLine();
 
-string toonOutput = ToonConverter.ToToon(customers);
-Console.WriteLine(toonOutput);
+Console.WriteLine("COMPACT TOON (maximum token savings):");
+Console.WriteLine("-------------------------------------");
+string compactToon = ToonConverter.ToCompactToon(customers);
+Console.WriteLine(compactToon);
 Console.WriteLine();
 
 // -----------------------------------------------------------------------------
-// Example 2: See the token savings
+// Example 2: Compare all formats
 // -----------------------------------------------------------------------------
 
-var stats = ToonConverter.GetTokenReduction(customers);
+var comparison = ToonConverter.CompareFormats(customers);
 
-Console.WriteLine("Token Reduction Statistics:");
-Console.WriteLine("---------------------------");
-Console.WriteLine($"JSON tokens:  {stats.JsonTokens}");
-Console.WriteLine($"TOON tokens:  {stats.ToonTokens}");
-Console.WriteLine($"Tokens saved: {stats.TokensSaved}");
-Console.WriteLine($"Reduction:    {stats.ReductionPercent:F1}%");
+Console.WriteLine("Format Comparison:");
+Console.WriteLine("------------------");
+Console.WriteLine($"JSON tokens:          {comparison.JsonTokens}");
+Console.WriteLine($"Standard TOON tokens: {comparison.StandardToonTokens} ({comparison.StandardToonReductionPercent:F1}% saved)");
+Console.WriteLine($"Compact TOON tokens:  {comparison.CompactToonTokens} ({comparison.CompactToonReductionPercent:F1}% saved)");
 Console.WriteLine();
 
 // -----------------------------------------------------------------------------
-// Example 3: Larger dataset shows bigger savings
+// Example 3: Larger dataset
 // -----------------------------------------------------------------------------
 
 var products = Enumerable.Range(1, 100).Select(i => new
@@ -53,27 +57,18 @@ var products = Enumerable.Range(1, 100).Select(i => new
     InStock = i % 2 == 0
 }).ToArray();
 
-var productStats = ToonConverter.GetTokenReduction(products);
+var productComparison = ToonConverter.CompareFormats(products);
 
 Console.WriteLine("Large Dataset (100 products):");
 Console.WriteLine("-----------------------------");
-Console.WriteLine($"JSON tokens:  {productStats.JsonTokens}");
-Console.WriteLine($"TOON tokens:  {productStats.ToonTokens}");
-Console.WriteLine($"Tokens saved: {productStats.TokensSaved}");
-Console.WriteLine($"Reduction:    {productStats.ReductionPercent:F1}%");
+Console.WriteLine($"JSON tokens:          {productComparison.JsonTokens}");
+Console.WriteLine($"Standard TOON tokens: {productComparison.StandardToonTokens} ({productComparison.StandardToonReductionPercent:F1}% saved)");
+Console.WriteLine($"Compact TOON tokens:  {productComparison.CompactToonTokens} ({productComparison.CompactToonReductionPercent:F1}% saved)");
 Console.WriteLine();
 
 // -----------------------------------------------------------------------------
-// Example 4: Custom options
+// Example 4: Choose format explicitly with Serialize()
 // -----------------------------------------------------------------------------
-
-var options = new ToonOptions
-{
-    Delimiter = '|',
-    ArrayDelimiter = ',',
-    Prefix = '~',
-    IncludeNulls = false
-};
 
 var users = new[]
 {
@@ -81,13 +76,17 @@ var users = new[]
     new { Id = 2, Email = "bob@example.com" }
 };
 
-string customToon = ToonConverter.ToToon(users, options);
-Console.WriteLine("Custom Options Example:");
-Console.WriteLine("-----------------------");
-Console.WriteLine(customToon);
+Console.WriteLine("Explicit Format Selection:");
+Console.WriteLine("--------------------------");
+Console.WriteLine("ToonFormat.Standard:");
+Console.WriteLine(ToonConverter.Serialize(users, ToonFormat.Standard));
+Console.WriteLine();
+Console.WriteLine("ToonFormat.Compact:");
+Console.WriteLine(ToonConverter.Serialize(users, ToonFormat.Compact));
 Console.WriteLine();
 
 Console.WriteLine("=== Quick Start Complete ===");
-Console.WriteLine("\nNext steps:");
-Console.WriteLine("- See OpenAI example for Azure OpenAI integration");
-Console.WriteLine("- See RAG example for retrieval-augmented generation");
+Console.WriteLine("\nKey takeaways:");
+Console.WriteLine("- Use ToToon() for human-readable output (debugging, logging)");
+Console.WriteLine("- Use ToCompactToon() for maximum token savings (LLM API calls)");
+Console.WriteLine("- Use CompareFormats() to see savings across all formats");

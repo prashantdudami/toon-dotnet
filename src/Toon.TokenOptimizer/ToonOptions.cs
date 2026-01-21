@@ -46,7 +46,48 @@ public class ToonOptions
     public bool PropertyNameCaseInsensitive { get; set; } = true;
 
     /// <summary>
+    /// Enable strict mode for validation. When true, parsing enforces stricter rules. Default is false.
+    /// </summary>
+    public bool Strict { get; set; } = false;
+
+    /// <summary>
+    /// The escape character used for escaping delimiters in values. Default is '\'.
+    /// </summary>
+    public char EscapeCharacter { get; set; } = '\\';
+
+    /// <summary>
+    /// Whether to include type information for polymorphic serialization. Default is false.
+    /// </summary>
+    public bool IncludeTypeInfo { get; set; } = false;
+
+    /// <summary>
+    /// Maximum length of output string. 0 means no limit. Default is 0.
+    /// </summary>
+    public int MaxOutputLength { get; set; } = 0;
+
+    /// <summary>
     /// Creates a new instance of ToonOptions with default values.
     /// </summary>
     public static ToonOptions Default => new();
+
+    /// <summary>
+    /// Creates options optimized for minimum token usage.
+    /// </summary>
+    public static ToonOptions MinimalTokens => new()
+    {
+        Delimiter = '|',
+        ArrayDelimiter = ',',
+        Prefix = '~',
+        IncludeNulls = false,
+        UseHeaderRow = true
+    };
+
+    /// <summary>
+    /// Creates options for strict validation mode.
+    /// </summary>
+    public static ToonOptions StrictMode => new()
+    {
+        Strict = true,
+        PropertyNameCaseInsensitive = false
+    };
 }

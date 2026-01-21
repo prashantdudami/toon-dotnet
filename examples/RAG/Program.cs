@@ -64,28 +64,32 @@ var knowledgeBaseArticles = new[]
 };
 
 // -----------------------------------------------------------------------------
-// Compare JSON vs TOON for RAG context injection
+// Compare all formats for RAG context injection
 // -----------------------------------------------------------------------------
 
-string toonArticles = ToonConverter.ToToon(knowledgeBaseArticles);
-var stats = ToonConverter.GetTokenReduction(knowledgeBaseArticles);
+var comparison = ToonConverter.CompareFormats(knowledgeBaseArticles);
 
 Console.WriteLine("RAG Context Token Analysis:");
 Console.WriteLine("===========================");
-Console.WriteLine($"Articles retrieved: {knowledgeBaseArticles.Length}");
-Console.WriteLine($"JSON tokens:        {stats.JsonTokens}");
-Console.WriteLine($"TOON tokens:        {stats.ToonTokens}");
-Console.WriteLine($"Tokens saved:       {stats.TokensSaved}");
-Console.WriteLine($"Reduction:          {stats.ReductionPercent:F1}%");
+Console.WriteLine($"Articles retrieved:   {knowledgeBaseArticles.Length}");
+Console.WriteLine($"JSON tokens:          {comparison.JsonTokens}");
+Console.WriteLine($"Standard TOON tokens: {comparison.StandardToonTokens} ({comparison.StandardToonReductionPercent:F1}% saved)");
+Console.WriteLine($"Compact TOON tokens:  {comparison.CompactToonTokens} ({comparison.CompactToonReductionPercent:F1}% saved)");
 Console.WriteLine();
 
 // -----------------------------------------------------------------------------
-// Show the TOON output
+// Show both TOON formats
 // -----------------------------------------------------------------------------
 
-Console.WriteLine("TOON-formatted articles:");
-Console.WriteLine("------------------------");
-Console.WriteLine(toonArticles);
+Console.WriteLine("STANDARD TOON (human-readable):");
+Console.WriteLine("-------------------------------");
+Console.WriteLine(ToonConverter.ToToon(knowledgeBaseArticles));
+Console.WriteLine();
+
+Console.WriteLine("COMPACT TOON (maximum savings):");
+Console.WriteLine("-------------------------------");
+string compactArticles = ToonConverter.ToCompactToon(knowledgeBaseArticles);
+Console.WriteLine(compactArticles);
 Console.WriteLine();
 
 // -----------------------------------------------------------------------------
@@ -98,8 +102,8 @@ string ragPrompt = $"""
     You are a helpful customer support assistant. Answer the user's question 
     based on the knowledge base articles provided below.
     
-    Knowledge Base (TOON format - pipe-delimited, schema on first line):
-    {toonArticles}
+    Knowledge Base (TOON Compact format - pipe-delimited, schema on first line):
+    {compactArticles}
     
     User Question: {userQuestion}
     
