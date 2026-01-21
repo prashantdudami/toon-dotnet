@@ -331,7 +331,8 @@ public class ToonConverterTests
     [Fact]
     public void ToToon_ExceedsMaxDepth_ThrowsException()
     {
-        var options = new ToonOptions { MaxDepth = 1 };
+        // MaxDepth = 0 means only the root object is allowed, no nested objects
+        var options = new ToonOptions { MaxDepth = 0 };
         var nested = new NestedObject 
         { 
             Id = "1", 
@@ -341,6 +342,324 @@ public class ToonConverterTests
         var action = () => ToonConverter.ToToon(nested, options);
         
         action.Should().Throw<ToonSerializationException>();
+    }
+
+    [Fact]
+    public void ToToon_WithNullableInt_HandlesNull()
+    {
+        int? value = null;
+        var result = ToonConverter.ToToon(value);
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ToToon_WithNullableInt_HandlesValue()
+    {
+        int? value = 42;
+        var result = ToonConverter.ToToon(value);
+        result.Should().Be("42");
+    }
+
+    [Fact]
+    public void ToToon_WithEmptyString_ReturnsEmptyString()
+    {
+        var result = ToonConverter.ToToon("");
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ToToon_WithWhitespaceString_ReturnsWhitespace()
+    {
+        var result = ToonConverter.ToToon("   ");
+        result.Should().Be("   ");
+    }
+
+    [Fact]
+    public void ToToon_WithNegativeNumbers_FormatsCorrectly()
+    {
+        ToonConverter.ToToon(-42).Should().Be("-42");
+        ToonConverter.ToToon(-99.99m).Should().Be("-99.99");
+        ToonConverter.ToToon(-3.14).Should().Contain("-3.14");
+    }
+
+    [Fact]
+    public void ToToon_WithZero_FormatsCorrectly()
+    {
+        ToonConverter.ToToon(0).Should().Be("0");
+        ToonConverter.ToToon(0.0).Should().Be("0");
+        ToonConverter.ToToon(0m).Should().Be("0");
+    }
+
+    [Fact]
+    public void ToToon_WithLargeNumbers_FormatsCorrectly()
+    {
+        ToonConverter.ToToon(long.MaxValue).Should().Be("9223372036854775807");
+        ToonConverter.ToToon(long.MinValue).Should().Be("-9223372036854775808");
+    }
+
+    [Fact]
+    public void ToToon_WithFloat_FormatsCorrectly()
+    {
+        var result = ToonConverter.ToToon(3.14159f);
+        result.Should().Contain("3.14");
+    }
+
+    [Fact]
+    public void ToToon_WithDateTimeOffset_FormatsCorrectly()
+    {
+        var dto = new DateTimeOffset(2025, 6, 15, 14, 30, 0, TimeSpan.FromHours(-5));
+        var result = ToonConverter.ToToon(dto);
+        result.Should().Contain("2025");
+        result.Should().Contain("06");
+        result.Should().Contain("15");
+    }
+
+    #endregion
+
+    #region Additional Array Edge Cases
+
+    [Fact]
+    public void ToToon_WithSingleElementArray_FormatsCorrectly()
+    {
+        var result = ToonConverter.ToToon(new[] { 42 });
+        result.Should().Be("~[42]");
+    }
+
+    [Fact]
+    public void ToToon_WithMixedNullsInArray_HandlesCorrectly()
+    {
+        var users = new User?[]
+        {
+            new User { Name = "Alice", Age = 30, City = "NYC" },
+            null,
+            new User { Name = "Bob", Age = 25, City = "LA" }
+        };
+
+        var result = ToonConverter.ToToon(users);
+        result.Should().Contain("Alice");
+        result.Should().Contain("Bob");
+    }
+
+    [Fact]
+    public void ToToon_WithEmptyStringInArray_FormatsCorrectly()
+    {
+        var result = ToonConverter.ToToon(new[] { "a", "", "c" });
+        result.Should().Be("~[a,,c]");
+    }
+
+    [Fact]
+    public void ToToon_WithBoolArray_FormatsCorrectly()
+    {
+        var result = ToonConverter.ToToon(new[] { true, false, true });
+        result.Should().Be("~[true,false,true]");
+    }
+
+    [Fact]
+    public void ToToon_WithDecimalArray_FormatsCorrectly()
+    {
+        var result = ToonConverter.ToToon(new[] { 1.1m, 2.2m, 3.3m });
+        result.Should().Be("~[1.1,2.2,3.3]");
+    }
+
+    #endregion
+
+    #region Object Edge Cases
+
+    [Fact]
+    public void ToToon_WithAllNullProperties_ExcludesNulls()
+    {
+        var nested = new NestedObject { Id = "1", User = null };
+        var options = new ToonOptions { IncludeNulls = false };
+        
+        var result = ToonConverter.ToToon(nested, options);
+        
+        result.Should().Contain("Id|1");
+        result.Should().NotContain("User|");
+    }
+
+    [Fact]
+    public void ToToon_WithIncludeNullsTrue_IncludesNulls()
+    {
+        var nested = new NestedObject { Id = "1", User = null };
+        var options = new ToonOptions { IncludeNulls = true };
+        
+        var result = ToonConverter.ToToon(nested, options);
+        
+        result.Should().Contain("Id|1");
+        result.Should().Contain("User|");
+    }
+
+    [Fact]
+    public void ToToon_WithEmptyObject_ReturnsEmptyObjectFormat()
+    {
+        var obj = new EmptyClass();
+        var result = ToonConverter.ToToon(obj);
+        result.Should().Be("~{}");
+    }
+
+    public class EmptyClass { }
+
+    [Fact]
+    public void ToToon_WithAllEnumValues_FormatsCorrectly()
+    {
+        ToonConverter.ToToon(Status.Active).Should().Be("Active");
+        ToonConverter.ToToon(Status.Inactive).Should().Be("Inactive");
+        ToonConverter.ToToon(Status.Pending).Should().Be("Pending");
+    }
+
+    #endregion
+
+    #region FromToon Edge Cases
+
+    [Fact]
+    public void FromToon_WithWhitespace_ReturnsNull()
+    {
+        var result = ToonConverter.FromToon<User>("   ");
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void FromToon_WithNullString_ReturnsNull()
+    {
+        var result = ToonConverter.FromToon<User>(null!);
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void FromToon_WithStringArray_ReturnsStringArray()
+    {
+        var result = ToonConverter.FromToon<string[]>("~[hello,world,test]");
+        
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(new[] { "hello", "world", "test" });
+    }
+
+    [Fact]
+    public void FromToon_WithBoolArray_ReturnsBoolArray()
+    {
+        var result = ToonConverter.FromToon<bool[]>("~[true,false,true]");
+        
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(new[] { true, false, true });
+    }
+
+    [Fact]
+    public void FromToon_WithDecimalArray_ReturnsDecimalArray()
+    {
+        var result = ToonConverter.FromToon<decimal[]>("~[1.1,2.2,3.3]");
+        
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(new[] { 1.1m, 2.2m, 3.3m });
+    }
+
+    [Fact]
+    public void FromToon_WithList_ReturnsList()
+    {
+        var result = ToonConverter.FromToon<List<int>>("~[1,2,3]");
+        
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(new List<int> { 1, 2, 3 });
+    }
+
+    [Fact]
+    public void FromToon_CaseInsensitivePropertyMatch()
+    {
+        var toon = "~age|30,city|NYC,name|Alice";  // lowercase property names
+        var result = ToonConverter.FromToon<User>(toon);
+
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("Alice");
+        result.Age.Should().Be(30);
+    }
+
+    [Fact]
+    public void FromToon_WithEnumValue_ParsesCorrectly()
+    {
+        var toon = "~Name|Test,Status|Pending";
+        var result = ToonConverter.FromToon<EntityWithEnum>(toon);
+
+        result.Should().NotBeNull();
+        result!.Status.Should().Be(Status.Pending);
+    }
+
+    #endregion
+
+    #region Token Reduction Edge Cases
+
+    [Fact]
+    public void GetTokenReduction_WithEmptyArray_ReturnsStats()
+    {
+        var stats = ToonConverter.GetTokenReduction(Array.Empty<int>());
+
+        stats.Should().NotBeNull();
+        stats.ToonOutput.Should().Be("~[]");
+    }
+
+    [Fact]
+    public void GetTokenReduction_WithSingleObject_ReturnsStats()
+    {
+        var user = new User { Name = "Alice", Age = 30, City = "NYC" };
+        var stats = ToonConverter.GetTokenReduction(user);
+
+        stats.Should().NotBeNull();
+        stats.JsonTokens.Should().BeGreaterThan(0);
+        stats.ToonTokens.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public void GetTokenReduction_StatsToString_FormatsCorrectly()
+    {
+        var user = new User { Name = "Alice", Age = 30, City = "NYC" };
+        var stats = ToonConverter.GetTokenReduction(user);
+
+        var str = stats.ToString();
+        str.Should().Contain("JSON:");
+        str.Should().Contain("TOON:");
+        str.Should().Contain("Saved:");
+    }
+
+    #endregion
+
+    #region Options Edge Cases
+
+    [Fact]
+    public void ToonOptions_DefaultValues_AreCorrect()
+    {
+        var options = ToonOptions.Default;
+
+        options.Delimiter.Should().Be('|');
+        options.ArrayDelimiter.Should().Be(',');
+        options.Prefix.Should().Be('~');
+        options.IncludeNulls.Should().BeFalse();
+        options.MaxDepth.Should().Be(10);
+        options.UseHeaderRow.Should().BeTrue();
+        options.PropertyNameCaseInsensitive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ToToon_WithUseHeaderRowFalse_OmitsHeader()
+    {
+        var options = new ToonOptions { UseHeaderRow = false };
+        var users = new[]
+        {
+            new User { Name = "Alice", Age = 30, City = "NYC" }
+        };
+
+        var result = ToonConverter.ToToon(users, options);
+        
+        // Without header row, should not have the [Header] format
+        result.Should().StartWith("~");
+    }
+
+    [Fact]
+    public void ToToon_WithCustomDateTimeFormat_UsesFormat()
+    {
+        var options = new ToonOptions { DateTimeFormat = "yyyy-MM-dd" };
+        var date = new DateTime(2025, 6, 15, 14, 30, 45);
+
+        var result = ToonConverter.ToToon(date, options);
+        
+        result.Should().Be("2025-06-15");
     }
 
     #endregion
@@ -374,6 +693,144 @@ public class ToonConverterTests
         result[0].Age.Should().Be(30);
         result[1].Name.Should().Be("Bob");
         result[1].City.Should().Be("LA");
+    }
+
+    [Fact]
+    public void RoundTrip_WithBoolArray_PreservesData()
+    {
+        var original = new[] { true, false, true, false };
+        var toon = ToonConverter.ToToon(original);
+        var result = ToonConverter.FromToon<bool[]>(toon);
+
+        result.Should().BeEquivalentTo(original);
+    }
+
+    [Fact]
+    public void RoundTrip_WithStringArray_PreservesData()
+    {
+        var original = new[] { "hello", "world", "test" };
+        var toon = ToonConverter.ToToon(original);
+        var result = ToonConverter.FromToon<string[]>(toon);
+
+        result.Should().BeEquivalentTo(original);
+    }
+
+    [Fact]
+    public void RoundTrip_WithDecimalArray_PreservesData()
+    {
+        var original = new[] { 1.5m, 2.75m, 3.125m };
+        var toon = ToonConverter.ToToon(original);
+        var result = ToonConverter.FromToon<decimal[]>(toon);
+
+        result.Should().BeEquivalentTo(original);
+    }
+
+    [Fact]
+    public void RoundTrip_WithLargeArray_PreservesData()
+    {
+        var original = Enumerable.Range(1, 1000).ToArray();
+        var toon = ToonConverter.ToToon(original);
+        var result = ToonConverter.FromToon<int[]>(toon);
+
+        result.Should().BeEquivalentTo(original);
+    }
+
+    [Fact]
+    public void RoundTrip_WithProductArray_PreservesData()
+    {
+        var original = new[]
+        {
+            new Product { Sku = "SKU-001", Name = "Widget", Price = 9.99m, Quantity = 100 },
+            new Product { Sku = "SKU-002", Name = "Gadget", Price = 19.99m, Quantity = 50 }
+        };
+
+        var toon = ToonConverter.ToToon(original);
+        var result = ToonConverter.FromToon<Product[]>(toon);
+
+        result.Should().HaveCount(2);
+        result![0].Sku.Should().Be("SKU-001");
+        result[0].Price.Should().Be(9.99m);
+        result[1].Name.Should().Be("Gadget");
+        result[1].Quantity.Should().Be(50);
+    }
+
+    #endregion
+
+    #region Exception Tests
+
+    [Fact]
+    public void ToonException_CanBeCreatedWithMessage()
+    {
+        var ex = new ToonException("Test message");
+        ex.Message.Should().Be("Test message");
+    }
+
+    [Fact]
+    public void ToonException_CanBeCreatedWithInnerException()
+    {
+        var inner = new InvalidOperationException("Inner");
+        var ex = new ToonException("Outer", inner);
+        
+        ex.Message.Should().Be("Outer");
+        ex.InnerException.Should().Be(inner);
+    }
+
+    [Fact]
+    public void ToonParseException_IncludesPosition()
+    {
+        var ex = new ToonParseException("Parse error", 42);
+        
+        ex.Message.Should().Be("Parse error");
+        ex.Position.Should().Be(42);
+    }
+
+    [Fact]
+    public void ToonSerializationException_IncludesTargetType()
+    {
+        var ex = new ToonSerializationException("Serialize error", typeof(User));
+        
+        ex.Message.Should().Be("Serialize error");
+        ex.TargetType.Should().Be(typeof(User));
+    }
+
+    #endregion
+
+    #region Performance Sanity Tests
+
+    [Fact]
+    public void ToToon_With1000Items_CompletesQuickly()
+    {
+        var users = Enumerable.Range(1, 1000).Select(i => new User
+        {
+            Name = $"User{i}",
+            Age = 20 + (i % 50),
+            City = $"City{i % 100}"
+        }).ToArray();
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var result = ToonConverter.ToToon(users);
+        stopwatch.Stop();
+
+        result.Should().NotBeEmpty();
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000); // Should complete in under 1 second
+    }
+
+    [Fact]
+    public void GetTokenReduction_With1000Items_ShowsSignificantSavings()
+    {
+        var products = Enumerable.Range(1, 1000).Select(i => new Product
+        {
+            Sku = $"SKU-{i:D6}",
+            Name = $"Product Number {i}",
+            Price = 9.99m + (i * 0.01m),
+            Quantity = i * 10
+        }).ToArray();
+
+        var stats = ToonConverter.GetTokenReduction(products);
+
+        // With 1000 items, should see at least 40% reduction
+        stats.ReductionPercent.Should().BeGreaterThan(40);
+        stats.TokensSaved.Should().BeGreaterThan(1000);
     }
 
     #endregion

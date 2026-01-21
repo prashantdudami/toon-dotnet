@@ -8,12 +8,12 @@ public class TokenReductionStats
     /// <summary>
     /// Estimated number of tokens in JSON format.
     /// </summary>
-    public int JsonTokens { get; init; }
+    public int JsonTokens { get; set; }
 
     /// <summary>
     /// Estimated number of tokens in TOON format.
     /// </summary>
-    public int ToonTokens { get; init; }
+    public int ToonTokens { get; set; }
 
     /// <summary>
     /// Number of tokens saved by using TOON format.
@@ -30,12 +30,12 @@ public class TokenReductionStats
     /// <summary>
     /// The JSON representation of the data.
     /// </summary>
-    public string JsonOutput { get; init; } = string.Empty;
+    public string JsonOutput { get; set; } = string.Empty;
 
     /// <summary>
     /// The TOON representation of the data.
     /// </summary>
-    public string ToonOutput { get; init; } = string.Empty;
+    public string ToonOutput { get; set; } = string.Empty;
 
     /// <summary>
     /// Returns a string representation of the token reduction statistics.
