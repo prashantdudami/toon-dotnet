@@ -22,7 +22,6 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>llm;ai;token;optimization;openai;azure;anthropic;claude;gpt;json;serialization;compression</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageIcon>icon.png</PackageIcon>
     
     <!-- Build Settings -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -32,7 +31,6 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="..\..\icon.png" Pack="true" PackagePath="\" Condition="Exists('..\..\icon.png')" />
   </ItemGroup>
 
   <ItemGroup>
