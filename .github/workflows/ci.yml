@@ -12,7 +12,7 @@ jobs:
     
     strategy:
       matrix:
-        dotnet-version: ['6.0.x', '7.0.x', '8.0.x']
+        dotnet-version: ['6.0.x', '8.0.x', '10.0.x']
 
     steps:
     - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
-      if: matrix.dotnet-version == '8.0.x'
+      if: matrix.dotnet-version == '10.0.x'
       with:
         files: '**/coverage.cobertura.xml'
         fail_ci_if_error: false
@@ -49,7 +49,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '10.0.x'
 
     - name: Restore dependencies
       run: dotnet restore
@@ -58,7 +58,7 @@ jobs:
       run: dotnet build --configuration Release
 
     - name: Pack
-      run: dotnet pack src/Toon.TokenOptimizer/Toon.TokenOptimizer.csproj --configuration Release --no-build --output ./artifacts
+      run: dotnet pack src/Toon.TokenOptimizer/Toon.TokenOptimizer.csproj --configuration Release --output ./artifacts
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
